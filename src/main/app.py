@@ -49,10 +49,10 @@ class App(customtkinter.CTk):
         self.dashboard_frame = DashboardFrame(self, self.data_manager, corner_radius=0, fg_color="transparent")
 
         # create projects frame
-        self.projects_frame = ProjectsFrame(self, corner_radius=0, fg_color="transparent")
+        self.projects_frame = ProjectsFrame(self, self.data_manager, corner_radius=0, fg_color="transparent")
 
         # create tasks frame
-        self.tasks_frame = TasksFrame(self, corner_radius=0, fg_color="transparent")
+        self.tasks_frame = TasksFrame(self, self.data_manager, corner_radius=0, fg_color="transparent")
 
         # select default frame
         self.select_frame_by_name("dashboard")
