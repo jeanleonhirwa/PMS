@@ -3,7 +3,7 @@ from main.data.data_manager import DataManager
 from main.ui.dialogs import TaskDialog, ConfirmationDialog
 
 class TasksFrame(customtkinter.CTkFrame):
-    def __init__(self, master, data_manager: DataManager, **kwargs):
+    def __init__(self, master, *, data_manager: DataManager, **kwargs):
         super().__init__(master, **kwargs)
 
         self.data_manager = data_manager
@@ -73,3 +73,27 @@ class TasksFrame(customtkinter.CTkFrame):
 
             delete_button = customtkinter.CTkButton(task_frame, text="Delete", command=lambda t=task: self.delete_task(t))
             delete_button.grid(row=0, column=3, padx=10, pady=10)
+
+    def add_task_dialog(self):
+        dialog = TaskDialog(self, title="Add Task", data_manager=self.data_manager)
+        result = dialog.get_input()
+        if result:
+            self.data_manager.add_task(result["project_id"], result["name"], result["due_date"])
+            self.update_tasks_list()
+
+    def edit_task_dialog(self, task):
+        dialog = TaskDialog(self, title="Edit Task", data_manager=self.data_manager, task=task)
+        result = dialog.get_input()
+        if result:
+            self.data_manager.update_task(task["id"], result["name"], result["due_date"], task["completed"])
+            self.update_tasks_list()
+
+    def delete_task(self, task):
+        dialog = ConfirmationDialog(self, title="Delete Task", text=f"Are you sure you want to delete '{task['name']}'?")
+        if dialog.get_input():
+            self.data_manager.delete_task(task["id"])
+            self.update_tasks_list()
+
+    def toggle_task_completion(self, task):
+        self.data_manager.update_task(task["id"], task["name"], task["due_date"], not task["completed"])
+        self.update_tasks_list()

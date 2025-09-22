@@ -4,63 +4,60 @@ from main.data.data_manager import DataManager
 from datetime import date
 
 class DashboardFrame(customtkinter.CTkFrame):
-    def __init__(self, master, data_manager: DataManager, **kwargs):
+    def __init__(self, master, *, data_manager: DataManager, **kwargs):
         super().__init__(master, **kwargs)
 
         self.data_manager = data_manager
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_columnconfigure(2, weight=1)
-        self.grid_columnconfigure(3, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        self.projects_count_label = customtkinter.CTkLabel(self, text="Projects: 0", font=("", 20))
-        self.projects_count_label.grid(row=0, column=0, padx=20, pady=20)
-
-        self.tasks_count_label = customtkinter.CTkLabel(self, text="Tasks: 0", font=("", 20))
-        self.tasks_count_label.grid(row=0, column=1, padx=20, pady=20)
-
-        self.completed_tasks_count_label = customtkinter.CTkLabel(self, text="Completed: 0", font=("", 20))
-        self.completed_tasks_count_label.grid(row=0, column=2, padx=20, pady=20)
-
-        self.pending_tasks_count_label = customtkinter.CTkLabel(self, text="Pending: 0", font=("", 20))
-        self.pending_tasks_count_label.grid(row=0, column=3, padx=20, pady=20)
-
-        self.progress_bar = customtkinter.CTkProgressBar(self)
-        self.progress_bar.grid(row=1, column=0, columnspan=4, padx=20, pady=10, sticky="ew")
+        self.projects_progress_frame = customtkinter.CTkScrollableFrame(self)
+        self.projects_progress_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+        self.projects_progress_frame.grid_columnconfigure(0, weight=1)
 
         self.today_tasks_label = customtkinter.CTkLabel(self, text="Today's Tasks", font=("", 20))
-        self.today_tasks_label.grid(row=2, column=0, columnspan=4, padx=20, pady=10)
+        self.today_tasks_label.grid(row=1, column=0, padx=20, pady=10)
 
         self.today_tasks_list = customtkinter.CTkTextbox(self, height=150)
-        self.today_tasks_list.grid(row=3, column=0, columnspan=4, padx=20, pady=10, sticky="ew")
+        self.today_tasks_list.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
 
         self.quote_label = customtkinter.CTkLabel(self, text="", font=("", 16, "italic"), wraplength=800)
-        self.quote_label.grid(row=4, column=0, columnspan=4, padx=20, pady=20)
+        self.quote_label.grid(row=3, column=0, padx=20, pady=20)
 
         self.update_dashboard()
         self.update_quote()
 
     def update_dashboard(self):
+        for widget in self.projects_progress_frame.winfo_children():
+            widget.destroy()
+
         projects = self.data_manager.get_projects()
-        tasks = self.data_manager.get_tasks()
-        completed_tasks = [task for task in tasks if task["completed"]]
-        pending_tasks = [task for task in tasks if not task["completed"]]
+        for i, project in enumerate(projects):
+            project_frame = customtkinter.CTkFrame(self.projects_progress_frame)
+            project_frame.grid(row=i, column=0, padx=10, pady=10, sticky="ew")
+            project_frame.grid_columnconfigure(0, weight=1)
 
-        self.projects_count_label.configure(text=f"Projects: {len(projects)}")
-        self.tasks_count_label.configure(text=f"Tasks: {len(tasks)}")
-        self.completed_tasks_count_label.configure(text=f"Completed: {len(completed_tasks)}")
-        self.pending_tasks_count_label.configure(text=f"Pending: {len(pending_tasks)}")
+            project_name_label = customtkinter.CTkLabel(project_frame, text=project["name"], font=("", 16, "bold"))
+            project_name_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        if len(tasks) > 0:
-            progress = len(completed_tasks) / len(tasks)
-            self.progress_bar.set(progress)
-        else:
-            self.progress_bar.set(0)
+            tasks = self.data_manager.get_tasks_by_project(project["id"])
+            completed_tasks = [task for task in tasks if task["completed"]]
+            
+            progress = 0
+            if len(tasks) > 0:
+                progress = len(completed_tasks) / len(tasks)
+
+            progress_bar = customtkinter.CTkProgressBar(project_frame)
+            progress_bar.set(progress)
+            progress_bar.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+            
+            progress_label = customtkinter.CTkLabel(project_frame, text=f"{int(progress * 100)}%")
+            progress_label.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+
 
         today = date.today().strftime("%Y-%m-%d")
-        today_tasks = [task for task in tasks if task["due_date"] == today]
+        today_tasks = [task for task in self.data_manager.get_tasks() if task["due_date"] == today]
         today_tasks_str = ""
         for task in today_tasks:
             today_tasks_str += f"- {task['name']}\n"
@@ -73,7 +70,7 @@ class DashboardFrame(customtkinter.CTkFrame):
             response = requests.get("https://api.quotable.io/random")
             if response.status_code == 200:
                 data = response.json()
-                quote = f'"'{data['content']}'"' - {data['author']}'
+                quote = f'"{data["content"]}" - {data["author"]}'
                 self.quote_label.configure(text=quote)
         except requests.exceptions.RequestException:
             self.quote_label.configure(text="Could not fetch a quote. Please check your internet connection.")
