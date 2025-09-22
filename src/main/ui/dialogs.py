@@ -88,30 +88,35 @@ class TaskDialog(customtkinter.CTkToplevel):
         self.cancel_button = customtkinter.CTkButton(self, text="Cancel", command=self.cancel_event)
         self.cancel_button.grid(row=3, column=1, padx=20, pady=20, sticky="w")
 
-    def update_project_menu(self):
-        projects = self.data_manager.get_projects()
-        project_names = [project["name"] for project in projects]
-        self.project_menu.configure(values=project_names)
-        if project_names:
-            self.project_menu.set(project_names[0])
+    def get_input(self):
+        self.wait_window()
+        return self.result
 
-    def ok_event(self):
-        projects = self.data_manager.get_projects()
-        selected_project_name = self.project_menu.get()
-        selected_project_id = None
-        for project in projects:
-            if project["name"] == selected_project_name:
-                selected_project_id = project["id"]
-                break
+class ConfirmationDialog(customtkinter.CTkToplevel):
+    def __init__(self, master, title, text):
+        super().__init__(master)
+        self.title(title)
+        self.geometry("300x150")
+        self.lift()
+        self.attributes("-topmost", True)
+        self.grab_set()
 
-        self.result = {
-            "name": self.name_entry.get(),
-            "due_date": self.due_date_entry.get(),
-            "project_id": selected_project_id
-        }
+        self.result = False
+
+        self.label = customtkinter.CTkLabel(self, text=text)
+        self.label.pack(padx=20, pady=20)
+
+        self.yes_button = customtkinter.CTkButton(self, text="Yes", command=self.yes_event)
+        self.yes_button.pack(side="left", padx=20, pady=20)
+
+        self.no_button = customtkinter.CTkButton(self, text="No", command=self.no_event)
+        self.no_button.pack(side="right", padx=20, pady=20)
+
+    def yes_event(self):
+        self.result = True
         self.destroy()
 
-    def cancel_event(self):
+    def no_event(self):
         self.destroy()
 
     def get_input(self):

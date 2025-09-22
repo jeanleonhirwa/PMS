@@ -1,5 +1,7 @@
 import customtkinter
+import requests
 from main.data.data_manager import DataManager
+from datetime import date
 
 class DashboardFrame(customtkinter.CTkFrame):
     def __init__(self, master, data_manager: DataManager, **kwargs):
@@ -31,10 +33,14 @@ class DashboardFrame(customtkinter.CTkFrame):
         self.today_tasks_label = customtkinter.CTkLabel(self, text="Today's Tasks", font=("", 20))
         self.today_tasks_label.grid(row=2, column=0, columnspan=4, padx=20, pady=10)
 
-        self.today_tasks_list = customtkinter.CTkTextbox(self, height=200)
+        self.today_tasks_list = customtkinter.CTkTextbox(self, height=150)
         self.today_tasks_list.grid(row=3, column=0, columnspan=4, padx=20, pady=10, sticky="ew")
 
+        self.quote_label = customtkinter.CTkLabel(self, text="", font=("", 16, "italic"), wraplength=800)
+        self.quote_label.grid(row=4, column=0, columnspan=4, padx=20, pady=20)
+
         self.update_dashboard()
+        self.update_quote()
 
     def update_dashboard(self):
         projects = self.data_manager.get_projects()
@@ -53,8 +59,21 @@ class DashboardFrame(customtkinter.CTkFrame):
         else:
             self.progress_bar.set(0)
 
-        today_tasks = [task for task in tasks if task["due_date"] == "2025-09-22"] # TODO: use current date
+        today = date.today().strftime("%Y-%m-%d")
+        today_tasks = [task for task in tasks if task["due_date"] == today]
         today_tasks_str = ""
         for task in today_tasks:
             today_tasks_str += f"- {task['name']}\n"
+        
+        self.today_tasks_list.delete("0.0", "end")
         self.today_tasks_list.insert("0.0", today_tasks_str)
+
+    def update_quote(self):
+        try:
+            response = requests.get("https://api.quotable.io/random")
+            if response.status_code == 200:
+                data = response.json()
+                quote = f'"'{data['content']}'"' - {data['author']}'
+                self.quote_label.configure(text=quote)
+        except requests.exceptions.RequestException:
+            self.quote_label.configure(text="Could not fetch a quote. Please check your internet connection.")
