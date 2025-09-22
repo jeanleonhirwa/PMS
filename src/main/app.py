@@ -1,4 +1,6 @@
 import customtkinter
+from PIL import Image
+import os
 from main.data.data_manager import DataManager
 from main.ui.dashboard import DashboardFrame
 from main.ui.projects import ProjectsFrame
@@ -17,6 +19,18 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
+        # load images
+        image_path = "assets"
+        self.home_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "home.svg")),
+                                                 dark_image=Image.open(os.path.join(image_path, "home.svg")),
+                                                 size=(20, 20))
+        self.folder_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "folder.svg")),
+                                                   dark_image=Image.open(os.path.join(image_path, "folder.svg")),
+                                                   size=(20, 20))
+        self.check_square_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "check-square.svg")),
+                                                         dark_image=Image.open(os.path.join(image_path, "check-square.svg")),
+                                                         size=(20, 20))
+
         # create navigation frame
         self.navigation_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
@@ -28,17 +42,17 @@ class App(customtkinter.CTk):
 
         self.home_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Dashboard",
                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                   anchor="w", command=self.home_button_event)
+                                                   anchor="w", command=self.home_button_event, image=self.home_image)
         self.home_button.grid(row=1, column=0, sticky="ew")
 
         self.projects_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Projects",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                      anchor="w", command=self.projects_button_event)
+                                                      anchor="w", command=self.projects_button_event, image=self.folder_image)
         self.projects_button.grid(row=2, column=0, sticky="ew")
 
         self.tasks_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Tasks",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                      anchor="w", command=self.tasks_button_event)
+                                                      anchor="w", command=self.tasks_button_event, image=self.check_square_image)
         self.tasks_button.grid(row=3, column=0, sticky="ew")
 
         self.appearance_mode_menu = customtkinter.CTkOptionMenu(self.navigation_frame, values=["Light", "Dark", "System"],
@@ -88,3 +102,8 @@ class App(customtkinter.CTk):
 
     def change_appearance_mode_event(self, new_appearance_mode):
         customtkinter.set_appearance_mode(new_appearance_mode)
+
+
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
